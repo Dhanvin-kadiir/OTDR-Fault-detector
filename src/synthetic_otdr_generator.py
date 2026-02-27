@@ -15,7 +15,7 @@ def simulate_trace(
     n_splices: tuple = (1, 3),
     n_connectors: tuple = (1, 3),
     n_bends: tuple = (1, 2),
-    break_prob: float = 1.0,
+    break_prob: float = 0.5,
     rng: np.random.Generator | None = None,
 ) -> pd.DataFrame:
     """Return a single synthetic OTDR trace as a DataFrame."""
@@ -66,15 +66,17 @@ def simulate_trace(
 
 def main():
     ap = argparse.ArgumentParser(description="Generate synthetic OTDR traces")
-    ap.add_argument("--n_traces", type=int, default=650)
+    ap.add_argument("--n_traces", type=int, default=600)
     ap.add_argument("--out", type=str, default="data/otdr_traces.csv")
+    ap.add_argument("--break_prob", type=float, default=0.5,
+                    help="Probability that each trace has a break event (default 0.5 for balance)")
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
 
     rng = np.random.default_rng(args.seed)
     dfs = []
     for tid in range(args.n_traces):
-        df = simulate_trace(rng=rng)
+        df = simulate_trace(rng=rng, break_prob=args.break_prob)
         df["trace_id"] = tid
         dfs.append(df)
 

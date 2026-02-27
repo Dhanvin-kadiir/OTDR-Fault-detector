@@ -28,6 +28,17 @@ def main():
         print("No features extracted – check your input data.")
         return
 
+    # Check class distribution before training
+    class_counts = y.value_counts().sort_index()
+    print("Class distribution in training data:")
+    print(class_counts.to_string())
+    print()
+
+    unique_classes = y.unique()
+    if len(unique_classes) < 2:
+        print("WARNING: Only one class found! Training data is not balanced – "
+              "check synthetic_otdr_generator.py --break_prob setting.")
+
     # Stratified split; fall back to non-stratified if any class has < 2 samples
     try:
         Xtr, Xte, ytr, yte = train_test_split(
@@ -43,12 +54,15 @@ def main():
     clf.fit(Xtr, ytr)
 
     yp = clf.predict(Xte)
-    print(confusion_matrix(yte, yp))
+    print("Confusion matrix:")
+    print(confusion_matrix(yte, yp, labels=sorted(unique_classes)))
+    print()
     print(classification_report(yte, yp, zero_division=0))
 
     Path(args.model_path).parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(clf, args.model_path)
     print(f"[OK] Saved model -> {args.model_path}")
+    print(f"     Classes learned: {clf.classes_.tolist()}")
 
 
 if __name__ == "__main__":
