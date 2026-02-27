@@ -1,0 +1,45 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Trained model (regenerable – large binary)
+data/rf_model.pkl
+
+# Large generated datasets (regenerable)
+data/otdr_traces.csv
+data/otdr_traces_breakheavy.csv
+
+# Keep example demo traces
+!data/faulty_trace.csv
+!data/healthy_trace.csv
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Environment files
+.env
+.env.*
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
