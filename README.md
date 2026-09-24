@@ -5,13 +5,12 @@
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.x-red?logo=streamlit&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.x-orange?logo=scikit-learn&logoColor=white)
-![Accuracy](https://img.shields.io/badge/Model%20Accuracy-98%25-brightgreen)
-![Security](https://img.shields.io/badge/Bandit-0%20Issues-brightgreen)
+![Model evaluation](https://img.shields.io/badge/evaluation-synthetic%20prototype-orange)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 **An AI-powered Optical Time-Domain Reflectometer (OTDR) trace analyser that detects fibre-optic faults in real time using a trained Random Forest classifier.**
 
-[Features](#features) · [Architecture](#architecture) · [Installation](#installation) · [Usage](#usage) · [Real-World Data](#real-world-data) · [Security](#security) · [Model Performance](#model-performance)
+[Features](#features) · [Architecture](#architecture) · [Installation](#installation) · [Usage](#usage) · [Real-World Data](#real-world-data) · [Security](#security) · [Model Evaluation](#model-evaluation) · [Known Issues](#known-issues)
 
 </div>
 
@@ -161,19 +160,19 @@ python scripts/fetch_real_data.py --out data/real_otdr_test.csv --max_traces 200
 | `--input` | *(auto-download)* | Path to local Kaggle CSV (skips download) |
 | `--max_traces` | `200` | Max number of traces to convert |
 
-The adapter script converts the Kaggle P1..P30 normalised power format into `distance_km` / `power_db` traces compatible with the Streamlit app and training pipeline.
+The adapter maps Kaggle P1..P30 normalized power values into the app's expected columns. It currently assumes a 20 km distance span and scales values using SNR; this is an exploratory format conversion, not a validated physical conversion to calibrated OTDR distance and dB. Verify the source schema, units, and location encoding before using its output for model evaluation or operational decisions.
 
 ---
 
 ## Security
 
-The codebase was scanned with **[Bandit](https://bandit.readthedocs.io/)** (Python security linter) — **0 High / 0 Medium issues** found.
+The dashboard applies basic upload checks. A previous Bandit scan is not a guarantee that the application is secure; rerun it against the current code when making a release.
 
 ### Security measures in `app_streamlit.py`
 
 | Threat | Mitigation |
 | --- | --- |
-| Path traversal attack on model loading | Whitelist: model must reside inside `data/` directory |
+| Path traversal when selecting a model | Model path is restricted to the `data/` directory |
 | Malicious large file upload (DoS) | File size cap: 10 MB |
 | Memory exhaustion via oversized CSV | Row count cap: 100,000 rows |
 | Invalid/malformed input data | Column validation, numeric type checking, NaN detection |
@@ -186,22 +185,13 @@ pip install bandit
 bandit -r src/ scripts/
 ```
 
----
+**Trust boundary:** model files are loaded with `joblib`, which uses Python pickle serialization. Loading an untrusted or tampered model file can execute code. Only load model files from a trusted source; restricting the path does not make a malicious pickle safe.
 
-## Model Performance
+## Model Evaluation
 
-Trained on 600 balanced synthetic traces (50% with breaks), held-out test set results:
+The training script prints a random candidate-row holdout report. Candidates from the same trace can appear in both training and test sets, so these metrics do not establish performance on unseen traces. The previously quoted 98% accuracy and 99% break precision/recall have not been validated with a trace-level holdout and should not be treated as verified performance.
 
-| Class | Precision | Recall | F1-Score |
-| --- | --- | --- | --- |
-| 0 — None | 0.99 | 1.00 | 0.99 |
-| 1 — Splice | 0.91 | 0.79 | 0.85 |
-| 2 — Connector | 0.97 | 0.77 | 0.86 |
-| 3 — Bend | 0.81 | 0.51 | 0.62 |
-| **4 — Break** | **0.99** | **0.99** | **0.99** |
-| **Overall accuracy** | | | **98%** |
-
-Break events (the most safety-critical fault) achieve **99% precision and 99% recall**.
+For a meaningful estimate, split by `trace_id` so every test trace is excluded from training, document the dataset and seed, and report per-class metrics plus the confusion matrix. Validate on independently collected and labeled real OTDR traces before making operational claims. See [PROJECT_ISSUES.md](PROJECT_ISSUES.md) for the remediation list.
 
 ---
 
@@ -269,3 +259,7 @@ This project is licensed under the **MIT License**.
 ## Author
 
 **Dhanvin Kadiir** — [GitHub](https://github.com/Dhanvin-kadiir)
+
+## Known Issues
+
+See [PROJECT_ISSUES.md](PROJECT_ISSUES.md) for known limitations, impact, and recommended fixes. The main open items are trace-level model evaluation, validation of the real-data conversion, and trusted handling of serialized model files.

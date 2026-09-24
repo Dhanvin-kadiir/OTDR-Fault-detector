@@ -1,7 +1,0 @@
-.venv\Scripts\activate
-pip install -r requirements.txt
-python src/synthetic_otdr_generator.py --n_traces 300 --out data/otdr_traces.csv
-python src/train.py --data data/otdr_traces.csv --model_path data/rf_model.pkl
-streamlit run src/app_streamlit.py
-python src/synthetic_otdr_generator.py --n_traces 1 --out data/my_trace.csv
-python src/train.py --data data/my_trace.csv --model_path data/rf_model.pkl
